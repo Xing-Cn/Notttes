@@ -1,4 +1,4 @@
-name: 额の自动化程序壹号
+name: 额の自动化程序壹号~
 
 on:
   push:
@@ -20,9 +20,16 @@ jobs:
         # 获取统计信息
         NOTE_COUNT=$(find . -name "*.md" | wc -l)
         
-        # 直接在命令中生成时间，避免变量问题
+        # 删除旧的统计区块(如果存在)
+        if grep -q :"### 🚀实时统计" README.md; then
+          echo "删除旧的统计区块..."
+          # 从 *### 🚀实时统计* 删除到 *auto updata* 之间的所有内容
+          sed -i '/### 🚀实时统计/,/^*auto updata*/d' README.md
+        fi
+        
+        # 在 README.md 中添加新的统计信息
         echo "" >> README.md
-        echo "### 🚀 实时统计" >> README.md
+        echo "### 🚀实时统计" >> README.md
         echo "> 最后同步: $(date '+%Y-%m-%d %H:%M')" >> README.md
         echo "" >> README.md
         echo "- 笔记总数: $NOTE_COUNT 篇" >> README.md
@@ -35,5 +42,5 @@ jobs:
         git config --local user.email "a138196861120@163.com"
         git config --local user.name "Xing-Cn"
         git add README.md
-        git commit -m "📊 更新统计" || exit 0
+        git commit -m "updata README.md" || exit 0
         git push
