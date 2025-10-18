@@ -50,10 +50,8 @@ jobs:
         # 判断触发方式
         if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           TRIGGER_SOURCE="🔄手动触发"
-          TRIGGER_DETAIL="(通过网页手动执行)"
         else
           TRIGGER_SOURCE="✅自动运行"
-          TRIGGER_DETAIL="(代码推送触发)"
         fi
 
         # 判断是否需要更新: 如果有文件变化, 或者笔记总数变了
@@ -77,7 +75,7 @@ jobs:
           echo "" >> README.md
           echo "- 笔记总数 : ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
           echo "- 本次更新 : ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
-          echo "- 触发方式 : $TRIGGER_SOURCE $TRIGGER_DETAIL" >> README.md
+          echo "- 触发方式 : $TRIGGER_SOURCE" >> README.md
           echo "" >> README.md
           echo "*auto updata*" >> README.md
 
