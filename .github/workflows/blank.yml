@@ -26,7 +26,7 @@ jobs:
         # 统计这次推送变化的笔记数量
         CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "^CTFFFF!!!/.*\.md$" | wc -l || echo "0")
         
-        echo "📊统计完成 : 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
+        echo "📊统计完成: 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
         
         # 保存统计结果
         echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
@@ -35,11 +35,23 @@ jobs:
     - name: 更新README统计
       run: |
         echo "📝检查是否需要更新README..."
-        
-        # 判断是否需要更新 : 如果有文件变化, 或者笔记总数变了
+        # 显示北京时间 (UTC+8)
+        BEIJING_TIME=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')
+
+        # 判断触发方式
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          TRIGGER_SOURCE="🔄手动触发"
+          TRIGGER_DETAIL="(通过网页手动执行)"
+        else
+          TRIGGER_SOURCE="✅自动运行"
+          TRIGGER_DETAIL="(代码推送触发)"
+        fi
+
+        # 判断是否需要更新: 如果有文件变化, 或者笔记总数变了
         if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ] || 
-           ! grep -q "笔记: ${{ steps.stats.outputs.ctf_total }} 篇" README.md 2>/dev/null; then
-          
+           [ "${{ github.event_name }}" == "workflow_dispatch" ] ||
+           ! grep -q "笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" README.md 2>/dev/null; then
+      
           echo "🔄需要更新, 开始处理README..."
           
           # 删除旧的统计区块(如果存在)
@@ -48,8 +60,6 @@ jobs:
             sed -i '/### 🚀笔记统计/,/*auto updata*/d' README.md
           fi
           
-          # 显示北京时间 (UTC+8)
-          BEIJING_TIME=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')
 
           # 添加新的统计区块(逐行添加，避免语法错误)
           echo "" >> README.md
@@ -58,7 +68,7 @@ jobs:
           echo "" >> README.md
           echo "- 笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
           echo "- 本次更新: ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
-          echo "- 统计状态: ✅运行正常" >> README.md
+          echo "- 触发方式: $TRIGGER_SOURCE $TRIGGER_DETAIL" >> README.md
           echo "" >> README.md
           echo "*auto updata*" >> README.md
           
