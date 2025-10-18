@@ -1,0 +1,29 @@
+name: 劳资的第一个自动化~
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name : 获取仓库代码
+      uses : actions/checkout@v4
+
+    - name : 欢迎
+      run : |
+        echo "🎉 恭喜！你的第一个 GitHub Action 运行成功！"
+        echo "📁 当前目录文件："
+        ls -la
+        echo "👤 触发者：${{ github.actor }}"
+        echo "🕐 触发时间：$(date)"
+    - name : 检查
+      run : |
+        echo "📊 统计 Markdown 文件："
+        find . -name "*.md" | wc -l
+        echo "📝 找到的笔记文件："
+        find . -name "*.md" | head -5
