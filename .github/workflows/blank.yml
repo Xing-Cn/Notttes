@@ -1,4 +1,4 @@
-name: 劳资的第一个自动化~
+name: 笔记库智能检查
 
 on:
   push:
@@ -7,23 +7,26 @@ on:
     branches: [ main ]
 
 jobs:
-  say-hello:
+  check-and-update:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name : 获取仓库代码
-      uses : actions/checkout@v4
+    # 第一步：获取代码
+    - name: 获取仓库代码
+      uses: actions/checkout@v4
       
-    - name : 检查
-      run : |
+    # 第二步：基础检查（保留原有功能）
+    - name: 基础检查
+      run: |
         echo "🎉 笔记库检查开始..."
         echo "📁 文件结构："
         find . -maxdepth 2 -type d | grep -v ".git" | sort
         echo "📝 笔记统计："
         find . -name "*.md" | wc -l | xargs echo "总Markdown文件:"
-
-    - name : 更新README
-      run : |
+        
+    # 第三步：更新README的统计信息（新增功能）
+    - name: 更新README统计
+      run: |
         echo "📊 正在更新README显示..."
         
         # 统计信息
@@ -41,6 +44,7 @@ jobs:
           echo "📝 创建新的统计区块..."
           cat >> README.md << EOF
 
+## 🚀 实时统计
 > 最后同步: $LAST_UPDATE
 
 - 笔记总数: $NOTE_COUNT 篇
@@ -52,7 +56,8 @@ EOF
         fi
         
         echo "✅ README 更新完成！"
-
+        
+    # 第四步：提交更新
     - name: 提交更改
       run: |
         git config --local user.email "action@github.com"
