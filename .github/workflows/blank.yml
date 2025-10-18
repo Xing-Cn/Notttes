@@ -13,17 +13,50 @@ jobs:
     steps:
     - name : 获取仓库代码
       uses : actions/checkout@v4
-
-    - name : 欢迎
-      run : |
-        echo "🎉 恭喜！你的第一个 GitHub Action 运行成功！"
-        echo "📁 当前目录文件："
-        ls -la
-        echo "👤 触发者：${{ github.actor }}"
-        echo "🕐 触发时间：$(date)"
+      
     - name : 检查
       run : |
-        echo "📊 统计 Markdown 文件："
-        find . -name "*.md" | wc -l
-        echo "📝 找到的笔记文件："
-        find . -name "*.md" | head -5
+        echo "🎉 笔记库检查开始..."
+        echo "📁 文件结构："
+        find . -maxdepth 2 -type d | grep -v ".git" | sort
+        echo "📝 笔记统计："
+        find . -name "*.md" | wc -l | xargs echo "总Markdown文件:"
+
+    - name : 更新README
+      run : |
+        echo "📊 正在更新README显示..."
+        
+        # 统计信息
+        NOTE_COUNT=$(find . -name "*.md" | wc -l)
+        LAST_UPDATE=$(git log -1 --format="%Y-%m-%d %H:%M")
+        LAST_COMMIT=$(git log -1 --format="%s")
+        
+        # 检查是否已有统计区块，如果有就更新，没有就创建
+        if grep -q "## 🚀 实时统计" README.md; then
+          echo "📝 更新现有统计区块..."
+          sed -i "s/笔记总数: .*/笔记总数: $NOTE_COUNT 篇/" README.md
+          sed -i "s/最后同步: .*/最后同步: $LAST_UPDATE/" README.md
+          sed -i "s/最近更新: .*/最近更新: $LAST_COMMIT/" README.md
+        else
+          echo "📝 创建新的统计区块..."
+          cat >> README.md << EOF
+
+> 最后同步 : $LAST_UPDATE
+
+- 笔记总数: $NOTE_COUNT 篇
+- 最近更新: $LAST_COMMIT
+- 检查状态: ✅ 运行正常
+
+*此统计由 GitHub Action 自动更新*
+EOF
+        fi
+        
+        echo "✅ README 更新完成！"
+
+    - name: 提交更改
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git diff --staged --quiet || git commit -m "📊 更新实时统计信息"
+        git push
