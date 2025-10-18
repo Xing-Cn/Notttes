@@ -15,7 +15,7 @@ jobs:
     - name: 获取仓库代码
       uses: actions/checkout@v4
       
-    # 第二步：基础检查（保留原有功能）
+    # 第二步：基础检查
     - name: 基础检查
       run: |
         echo "🎉 笔记库检查开始..."
@@ -24,7 +24,7 @@ jobs:
         echo "📝 笔记统计："
         find . -name "*.md" | wc -l | xargs echo "总Markdown文件:"
         
-    # 第三步：更新README的统计信息（新增功能）
+    # 第三步：更新README的统计信息
     - name: 更新README统计
       run: |
         echo "📊 正在更新README显示..."
@@ -34,27 +34,33 @@ jobs:
         LAST_UPDATE=$(git log -1 --format="%Y-%m-%d %H:%M")
         LAST_COMMIT=$(git log -1 --format="%s")
         
-        # 检查是否已有统计区块，如果有就更新，没有就创建
-        if grep -q "## 🚀 实时统计" README.md; then
-          echo "📝 更新现有统计区块..."
-          sed -i "s/笔记总数: .*/笔记总数: $NOTE_COUNT 篇/" README.md
-          sed -i "s/最后同步: .*/最后同步: $LAST_UPDATE/" README.md
-          sed -i "s/最近更新: .*/最近更新: $LAST_COMMIT/" README.md
-        else
-          echo "📝 创建新的统计区块..."
-          cat >> README.md << EOF
-
+        # 创建临时文件来生成统计内容
+        cat > /tmp/stats.md << 'EOF'
+        
 ## 🚀 实时统计
-> 最后同步: $LAST_UPDATE
-
-- 笔记总数: $NOTE_COUNT 篇
-- 最近更新: $LAST_COMMIT
+> 最后同步: 
+        
+- 笔记总数:  篇
+- 最近更新: 
 - 检查状态: ✅ 运行正常
-
+        
 *此统计由 GitHub Action 自动更新*
 EOF
+        
+        # 插入实际数据
+        sed -i "s/最后同步: .*/最后同步: $LAST_UPDATE/" /tmp/stats.md
+        sed -i "s/笔记总数: .*/笔记总数: $NOTE_COUNT 篇/" /tmp/stats.md
+        sed -i "s/最近更新: .*/最近更新: $LAST_COMMIT/" /tmp/stats.md
+        
+        # 检查是否已有统计区块
+        if grep -q "## 🚀 实时统计" README.md; then
+          echo "📝 更新现有统计区块..."
+          # 删除旧的统计区块（从 ## 🚀 实时统计 到下一个 ## 开头或文件结尾）
+          sed -i '/## 🚀 实时统计/,/^## [^#]/{//!d}; /## 🚀 实时统计/d' README.md
         fi
         
+        # 添加统计区块到README
+        cat /tmp/stats.md >> README.md
         echo "✅ README 更新完成！"
         
     # 第四步：提交更新
