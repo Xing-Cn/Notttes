@@ -3,6 +3,8 @@ Jst Learning...
 
 ### 📚笔记
 
-![自动检查](https://github.com/Xing-Cn/Notties/actions/workflows/blank.yml/badge.svg)  
 
-![GitHub仓库大小](https://img.shields.io/github/repo-size/Xing-Cn/Notties)
+![状态](https://img.shields.io/badge/📒笔记库-正常运行中-green)
+
+![统计](https://img.shields.io/badge/⭐CTF笔记-5篇-blue)
+![进度](https://img.shields.io/badge/🎯学习进度-进行中-yellow)
