@@ -1,8 +1,11 @@
-name: 笔记库智能检查
+name: 额の自动化程序壹号
 
 on:
   push:
     branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   check-and-update:
@@ -19,18 +22,18 @@ jobs:
         
         # 直接在命令中生成时间，避免变量问题
         echo "" >> README.md
-        echo "## 🚀 实时统计" >> README.md
+        echo "### 🚀 实时统计" >> README.md
         echo "> 最后同步: $(date '+%Y-%m-%d %H:%M')" >> README.md
         echo "" >> README.md
         echo "- 笔记总数: $NOTE_COUNT 篇" >> README.md
-        echo "- 检查状态: ✅ 运行正常" >> README.md
+        echo "- 检查状态: ✅运行正常" >> README.md
         echo "" >> README.md
-        echo "*自动更新*" >> README.md
+        echo "*auto updata*" >> README.md
         
     - name: 提交更改
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "a138196861120@163.com"
+        git config --local user.name "Xing-Cn"
         git add README.md
         git commit -m "📊 更新统计" || exit 0
         git push
