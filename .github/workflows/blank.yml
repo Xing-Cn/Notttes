@@ -1,4 +1,5 @@
 name: 额の自动化程序壹号~改
+
 on:
   push:
     branches: [ main ]
@@ -8,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  quick-update:
+  ctf-stats:
     runs-on: ubuntu-latest
     steps:
     - name: 获取代码
@@ -17,41 +18,48 @@ jobs:
     - name: 快速统计
       id: stats
       run: |
-        echo "🔍开始快速统计..."
-        CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep ".md$" | wc -l || echo "0")
-        TOTAL_FILES=$(find . -name "*.md" | wc -l)
-        echo "changed_count=$CHANGED_FILES" >> $GITHUB_OUTPUT
-        echo "total_count=$TOTAL_FILES" >> $GITHUB_OUTPUT
+        echo "🔍开始统计笔记..."
         
-    - name: 智能更新README
+        # 统计CTFFFF!!!文件夹里的.md文件总数
+        CTF_TOTAL=$(find CTFFFF!!! -name "*.md" 2>/dev/null | wc -l || echo "0")
+        
+        # 统计这次推送变化的笔记数量
+        CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "^CTFFFF!!!/.*\.md$" | wc -l || echo "0")
+        
+        echo "📊统计完成 : 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
+        
+        # 保存统计结果
+        echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
+        echo "ctf_total=$CTF_TOTAL" >> $GITHUB_OUTPUT
+        
+    - name: 更新README统计
       run: |
-        echo "📝检查是否需要更新..."
+        echo "📝检查是否需要更新README..."
         
-        # 判断是否需要更新
-        if [ "${{ steps.stats.outputs.changed_count }}" -gt 0 ] || 
-           ! grep -q "笔记总数: ${{ steps.stats.outputs.total_count }} 篇" README.md 2>/dev/null; then
+        # 判断是否需要更新 : 如果有文件变化, 或者笔记总数变了
+        if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ] || 
+           ! grep -q "笔记: ${{ steps.stats.outputs.ctf_total }} 篇" README.md 2>/dev/null; then
           
-          echo "🔄需要更新，准备替换统计信息..."
+          echo "🔄需要更新, 开始处理README..."
           
-          # 方法：先删除旧统计，再添加新统计（最稳定）
-          # 删除旧的统计区块
-          if grep -q "### 🚀实时统计" README.md; then
+          # 删除旧的统计区块(如果存在)
+          if grep -q "### 🚀笔记统计" README.md; then
             echo "🗑️删除旧统计区块..."
-            sed -i '/### 🚀实时统计/,/*auto updata*/d' README.md
+            sed -i '/### 🚀笔记统计/,/*auto updata*/d' README.md
           fi
           
-          # 添加新的统计区块（逐行添加，避免多行文本问题）
+          # 添加新的统计区块(逐行添加，避免语法错误)
           echo "" >> README.md
-          echo "### 🚀实时统计" >> README.md
+          echo "### 🚀笔记统计" >> README.md
           echo "> 最后同步: $(date '+%Y-%m-%d %H:%M')" >> README.md
           echo "" >> README.md
-          echo "- 笔记总数: ${{ steps.stats.outputs.total_count }} 篇" >> README.md
-          echo "- 本次更新: ${{ steps.stats.outputs.changed_count }} 篇" >> README.md
-          echo "- 检查状态: ✅运行正常" >> README.md
+          echo "- 笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
+          echo "- 本次更新: ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
+          echo "- 统计状态: ✅运行正常" >> README.md
           echo "" >> README.md
           echo "*auto updata*" >> README.md
           
-          echo "✅README 更新完成"
+          echo "✅README更新完成"
           echo "should_commit=true" >> $GITHUB_ENV
         else
           echo "⏭️统计无变化，跳过更新"
@@ -61,10 +69,10 @@ jobs:
     - name: 条件提交
       if: env.should_commit == 'true'
       run: |
-        echo "🚀开始提交更新..."
+        echo "🚀提交统计更新..."
         git config --local user.email "a138196861120@163.com"
         git config --local user.name "Xing-Cn"
         git add README.md
-        git commit -m "📊更新统计: +${{ steps.stats.outputs.changed_count }} 篇新笔记"
+        git commit -m "📊更新统计: +${{ steps.stats.outputs.ctf_changed }} 篇"
         git push
         echo "🎉提交完成！"
