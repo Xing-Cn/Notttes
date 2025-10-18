@@ -26,20 +26,11 @@ jobs:
         # 统计这次推送变化的笔记数量
         CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "^CTFFFF!!!/.*\.md$" | wc -l || echo "0")
         
-        # 获取最新笔记信息
-        LATEST_NOTE=$(find CTFFFF!!! -name "*.md" -type f -exec stat -c "%Y %n" {} \; 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
-        LATEST_NOTE_NAME=$(basename "$LATEST_NOTE" .md)
-        
-        # 获取笔记的相对路径(用于链接)
-        NOTE_REL_PATH=$(echo "$LATEST_NOTE" | sed 's|^\./||')
-        
         echo "📊统计完成: 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
         
         # 保存统计结果
         echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
         echo "ctf_total=$CTF_TOTAL" >> $GITHUB_OUTPUT
-        echo "latest_note=$LATEST_NOTE_NAME" >> $GITHUB_OUTPUT
-        echo "note_path=$NOTE_REL_PATH" >> $GITHUB_OUTPUT
         
     - name: 更新README统计
       run: |
@@ -80,18 +71,6 @@ jobs:
           echo "- 触发方式 : $TRIGGER_SOURCE $TRIGGER_DETAIL" >> README.md
           echo "" >> README.md
           echo "*auto updata*" >> README.md
-
-          # 新增笔记链接区域
-          echo "" >> README.md
-          echo "### 📖 最新笔记" >> README.md
-          echo "" >> README.md
-          echo "**[${{ steps.stats.outputs.latest_note }}](./${{ steps.stats.outputs.note_path }})**" >> README.md
-          echo "" >> README.md
-          echo "> 📅 最近更新的CTF学习笔记" >> README.md
-          echo "> " >> README.md
-          echo "> 🔗 [点击查看完整内容](./${{ steps.stats.outputs.note_path }})" >> README.md
-          echo "" >> README.md
-          echo "---" >> README.md
           
           echo "✅README更新完成"
           echo "should_commit=true" >> $GITHUB_ENV
