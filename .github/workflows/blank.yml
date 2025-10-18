@@ -41,7 +41,7 @@ jobs:
           echo "📝 创建新的统计区块..."
           cat >> README.md << EOF
 
-> 最后同步 : $LAST_UPDATE
+> 最后同步: $LAST_UPDATE
 
 - 笔记总数: $NOTE_COUNT 篇
 - 最近更新: $LAST_COMMIT
