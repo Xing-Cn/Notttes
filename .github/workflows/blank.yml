@@ -48,10 +48,13 @@ jobs:
             sed -i '/### 🚀笔记统计/,/*auto updata*/d' README.md
           fi
           
+          # 显示北京时间 (UTC+8)
+          BEIJING_TIME=$(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M')
+
           # 添加新的统计区块(逐行添加，避免语法错误)
           echo "" >> README.md
           echo "### 🚀笔记统计" >> README.md
-          echo "> 最后同步: $(date '+%Y-%m-%d %H:%M')" >> README.md
+          echo "> 最后同步: $BEIJING_TIME" >> README.md
           echo "" >> README.md
           echo "- 笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
           echo "- 本次更新: ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
