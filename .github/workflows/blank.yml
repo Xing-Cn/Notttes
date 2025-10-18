@@ -1,0 +1,60 @@
+name: 笔记库智能检查
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 获取仓库代码
+      uses: actions/checkout@v4
+      
+    - name: 基础检查
+      run: |
+        echo "🎉 笔记库检查开始..."
+        echo "📁 文件结构："
+        find . -maxdepth 2 -type d | grep -v ".git" | sort
+        echo "📝 笔记统计："
+        find . -name "*.md" | wc -l | xargs echo "总Markdown文件:"
+        
+    - name: 更新README统计
+      run: |
+        echo "📊 正在更新README显示..."
+        
+        NOTE_COUNT=$(find . -name "*.md" | wc -l)
+        LAST_UPDATE=$(git log -1 --format="%Y-%m-%d %H:%M")
+        LAST_COMMIT=$(git log -1 --format="%s")
+        
+        # 创建统计内容
+        cat > /tmp/stats.md << EOF
+        
+## 🚀 实时统计
+> 最后同步: $LAST_UPDATE
+
+- 笔记总数: $NOTE_COUNT 篇
+- 最近更新: $LAST_COMMIT
+- 检查状态: ✅ 运行正常
+
+*此统计由 GitHub Action 自动更新*
+EOF
+        
+        # 删除旧的统计区块（如果存在）
+        if grep -q "## 🚀 实时统计" README.md; then
+          echo "删除旧统计区块..."
+          sed -i '/## 🚀 实时统计/,/*此统计由 GitHub Action 自动更新*/d' README.md
+        fi
+        
+        # 添加新统计区块
+        cat /tmp/stats.md >> README.md
+        echo "✅ README 更新完成！"
+        
+    - name: 提交更改
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git diff --staged --quiet || git commit -m "📊 更新实时统计"
+        git push
