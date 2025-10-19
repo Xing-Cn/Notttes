@@ -18,53 +18,34 @@ jobs:
     - name: 快速统计
       id: stats
       run: |
-        echo "🔍开始调试统计..."
+        echo "🔍开始统计笔记..."
         
-        # 调试1: 显示当前目录结构
-        echo "📁 当前目录:"
-        ls -la
-        echo ""
+        # 获取当前数量
+        CURRENT_COUNT=$(find CTFFFF!!! -name "*.md" 2>/dev/null | wc -l || echo "0")
         
-        # 调试2: 显示CTF文件夹内容
-        echo "🛡️ CTF文件夹内容:"
-        ls -la CTFFFF!!!/ || echo "CTF文件夹不存在"
-        echo ""
+        # 获取上一次数量(如果失败就用当前数量)
+        PREVIOUS_COUNT=$CURRENT_COUNT
+        if git cat-file -e HEAD:CTFFFF!!! 2>/dev/null; then
+          PREVIOUS_COUNT=$(git ls-tree -r --name-only HEAD:CTFFFF!!! 2>/dev/null | grep "\.md$" | wc -l || echo "$CURRENT_COUNT")
+        fi
         
-        # 调试3: 显示Git历史
-        echo "📚 Git最近提交:"
-        git log --oneline -3 || echo "无Git历史"
-        echo ""
+        # 计算净变化(考虑新增和删除)
+        CTF_CHANGED=$((CURRENT_COUNT - PREVIOUS_COUNT))
         
-        # 调试4: 显示所有变化文件
-        echo "🔄 检测到的变化文件:"
-        git diff --name-only HEAD~1 HEAD 2>/dev/null | while read file; do
-          echo " - $file"
-        done || echo "无法获取变化文件"
-        echo ""
+        # 显示变化方向
+        if [ "$CTF_CHANGED" -gt 0 ]; then
+          CHANGE_DIRECTION="+$CTF_CHANGED"
+        elif [ "$CTF_CHANGED" -lt 0 ]; then
+          CHANGE_DIRECTION="$CTF_CHANGED"  # 自动显示负号
+        else
+          CHANGE_DIRECTION="0"
+        fi
         
-        # 调试5: 显示CTF相关变化
-        echo "🎯 CTF相关变化:"
-        git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "CTFFFF!!!" | while read file; do
-          echo " - $file"
-        done || echo "无CTF相关变化"
-        echo ""
+        echo "📊文件数量 : $PREVIOUS_COUNT → $CURRENT_COUNT (变化 : $CHANGE_DIRECTION)"
+        echo "📊统计完成 : 笔记总数 $CURRENT_COUNT 篇, 本次更新 $CTF_CHANGED 篇"
         
-        # 统计总数
-        CTF_TOTAL=$(find CTFFFF!!! -name "*.md" 2>/dev/null | wc -l || echo "0")
-        echo "📝 CTF文件夹统计:"
-        find CTFFFF!!! -name "*.md" 2>/dev/null | while read file; do
-          echo " - $file"
-        done || echo "无CTF笔记文件"
-        echo ""
-        
-        # 统计变化数量
-        CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "CTFFFF!!!" | grep "\.md$" | wc -l || echo "0")
-        
-        echo "📊 最终统计: 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
-        
-        # 保存统计结果
         echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
-        echo "ctf_total=$CTF_TOTAL" >> $GITHUB_OUTPUT
+        echo "ctf_total=$CURRENT_COUNT" >> $GITHUB_OUTPUT
         
     - name: 更新README统计
       run: |
@@ -79,8 +60,8 @@ jobs:
           TRIGGER_SOURCE="✅自动运行"
         fi
 
-        # 判断是否需要更新: 如果有文件变化, 或者笔记总数变了
-        if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ] || 
+        # 判断是否需要更新: 如果有文件变化, 或者笔记总数变了, 或者手动触发
+        if [ "${{ steps.stats.outputs.ctf_changed }}" -ne 0 ] || 
            [ "${{ github.event_name }}" == "workflow_dispatch" ] ||
            ! grep -q "笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" README.md 2>/dev/null; then
       
@@ -92,15 +73,23 @@ jobs:
             sed -i '/### 🚀笔记统计/,/*auto updata*/d' README.md
           fi
           
-
-          # 添加新的统计区块(逐行添加，避免语法错误)
+          # 添加新的统计区块
           echo "" >> README.md
           echo "### 🚀笔记统计" >> README.md
-          echo "> 最后同步 : $BEIJING_TIME" >> README.md
+          echo "> 最后同步: $BEIJING_TIME" >> README.md
           echo "" >> README.md
-          echo "- 笔记总数 : ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
-          echo "- 本次更新 : ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
-          echo "- 触发方式 : $TRIGGER_SOURCE" >> README.md
+          echo "- 笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
+          
+          # 智能显示更新数量(带正负号)
+          if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ]; then
+            echo "- 本次更新: +${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
+          elif [ "${{ steps.stats.outputs.ctf_changed }}" -lt 0 ]; then
+            echo "- 本次更新: ${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
+          else
+            echo "- 本次更新: 0 篇" >> README.md
+          fi
+          
+          echo "- 触发方式: $TRIGGER_SOURCE" >> README.md
           echo "" >> README.md
           echo "*auto updata*" >> README.md
           
@@ -118,6 +107,15 @@ jobs:
         git config --local user.email "a138196861120@163.com"
         git config --local user.name "Xing-Cn"
         git add README.md
-        git commit -m "📊更新统计 : +${{ steps.stats.outputs.ctf_changed }} 篇"
+        
+        # 智能提交信息
+        if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ]; then
+          git commit -m "📊更新统计: +${{ steps.stats.outputs.ctf_changed }} 篇"
+        elif [ "${{ steps.stats.outputs.ctf_changed }}" -lt 0 ]; then
+          git commit -m "📊更新统计: ${{ steps.stats.outputs.ctf_changed }} 篇"
+        else
+          git commit -m "📊更新统计"
+        fi
+        
         git push
         echo "🎉提交完成！"
