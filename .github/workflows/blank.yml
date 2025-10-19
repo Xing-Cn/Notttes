@@ -20,29 +20,28 @@ jobs:
       run: |
         echo "🔍开始统计笔记..."
         
-        # 获取当前数量
+        # 获取当前的文件数量
         CURRENT_COUNT=$(find CTFFFF!!! -name "*.md" 2>/dev/null | wc -l || echo "0")
         
-        # 获取上一次数量(如果失败就用当前数量)
+        # 从README中读取上一次的笔记总数
         PREVIOUS_COUNT=$CURRENT_COUNT
-        if git cat-file -e HEAD:CTFFFF!!! 2>/dev/null; then
-          PREVIOUS_COUNT=$(git ls-tree -r --name-only HEAD:CTFFFF!!! 2>/dev/null | grep "\.md$" | wc -l || echo "$CURRENT_COUNT")
+        if grep -q "笔记总数:" README.md 2>/dev/null; then
+          # 找到包含"笔记总数:"的行，然后提取数字
+          COUNT_LINE=$(grep "笔记总数:" README.md | tail -1)
+          PREVIOUS_COUNT=$(echo "$COUNT_LINE" | grep -o '[0-9]\+' | head -1)
+          
+          # 验证提取的数字是否有效
+          if ! echo "$PREVIOUS_COUNT" | grep -q '^[0-9]\+$' || [ -z "$PREVIOUS_COUNT" ]; then
+            PREVIOUS_COUNT=$CURRENT_COUNT
+          fi
         fi
         
-        # 计算净变化(考虑新增和删除)
+        # 计算净变化
         CTF_CHANGED=$((CURRENT_COUNT - PREVIOUS_COUNT))
         
-        # 显示变化方向
-        if [ "$CTF_CHANGED" -gt 0 ]; then
-          CHANGE_DIRECTION="+$CTF_CHANGED"
-        elif [ "$CTF_CHANGED" -lt 0 ]; then
-          CHANGE_DIRECTION="$CTF_CHANGED"  # 自动显示负号
-        else
-          CHANGE_DIRECTION="0"
-        fi
-        
-        echo "📊文件数量 : $PREVIOUS_COUNT → $CURRENT_COUNT (变化 : $CHANGE_DIRECTION)"
-        echo "📊统计完成 : 笔记总数 $CURRENT_COUNT 篇, 本次更新 $CTF_CHANGED 篇"
+        echo "📊历史记录: $PREVIOUS_COUNT 篇 → 当前实际: $CURRENT_COUNT 篇"
+        echo "📊变化: $CTF_CHANGED 篇"
+        echo "📊统计完成: 笔记总数 $CURRENT_COUNT 篇, 本次更新 $CTF_CHANGED 篇"
         
         echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
         echo "ctf_total=$CURRENT_COUNT" >> $GITHUB_OUTPUT
@@ -80,7 +79,7 @@ jobs:
           echo "" >> README.md
           echo "- 笔记总数: ${{ steps.stats.outputs.ctf_total }} 篇" >> README.md
           
-          # 智能显示更新数量(带正负号)
+          # 智能显示更新数量（带正负号）
           if [ "${{ steps.stats.outputs.ctf_changed }}" -gt 0 ]; then
             echo "- 本次更新: +${{ steps.stats.outputs.ctf_changed }} 篇" >> README.md
           elif [ "${{ steps.stats.outputs.ctf_changed }}" -lt 0 ]; then
