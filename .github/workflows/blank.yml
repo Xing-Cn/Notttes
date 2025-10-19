@@ -18,15 +18,49 @@ jobs:
     - name: 快速统计
       id: stats
       run: |
-        echo "🔍开始统计笔记..."
+        echo "🔍开始调试统计..."
         
-        # 统计CTFFFF!!!文件夹里的.md文件总数
+        # 调试1: 显示当前目录结构
+        echo "📁 当前目录:"
+        ls -la
+        echo ""
+        
+        # 调试2: 显示CTF文件夹内容
+        echo "🛡️ CTF文件夹内容:"
+        ls -la CTFFFF!!!/ || echo "CTF文件夹不存在"
+        echo ""
+        
+        # 调试3: 显示Git历史
+        echo "📚 Git最近提交:"
+        git log --oneline -3 || echo "无Git历史"
+        echo ""
+        
+        # 调试4: 显示所有变化文件
+        echo "🔄 检测到的变化文件:"
+        git diff --name-only HEAD~1 HEAD 2>/dev/null | while read file; do
+          echo " - $file"
+        done || echo "无法获取变化文件"
+        echo ""
+        
+        # 调试5: 显示CTF相关变化
+        echo "🎯 CTF相关变化:"
+        git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "CTFFFF!!!" | while read file; do
+          echo " - $file"
+        done || echo "无CTF相关变化"
+        echo ""
+        
+        # 统计总数
         CTF_TOTAL=$(find CTFFFF!!! -name "*.md" 2>/dev/null | wc -l || echo "0")
+        echo "📝 CTF文件夹统计:"
+        find CTFFFF!!! -name "*.md" 2>/dev/null | while read file; do
+          echo " - $file"
+        done || echo "无CTF笔记文件"
+        echo ""
         
-        # 统计这次推送变化的笔记数量
-        CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "^CTFFFF!!!/.*\.md$" | wc -l || echo "0")
+        # 统计变化数量
+        CTF_CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep "CTFFFF!!!" | grep "\.md$" | wc -l || echo "0")
         
-        echo "📊统计完成: 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
+        echo "📊 最终统计: 笔记总数 $CTF_TOTAL 篇, 本次更新 $CTF_CHANGED 篇"
         
         # 保存统计结果
         echo "ctf_changed=$CTF_CHANGED" >> $GITHUB_OUTPUT
