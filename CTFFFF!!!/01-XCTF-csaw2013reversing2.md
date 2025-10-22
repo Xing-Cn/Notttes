@@ -34,21 +34,21 @@
   之后的`sub_401000(v3 + 4, lpMem)`显然是flag的生成函数了，我知道得**先生成flag**,才可以弹窗显示，因此这个函数应该**在if前就实现**,*题解依旧`jmp`*
   
 - 最后的结果是
-    ```c++
+  ```c++
     int __cdecl __noreturn main(int argc, const char **argv, const char **envp) {
-    int v3; // ecx
-    CHAR *lpMem; // [esp+8h] [ebp-Ch]
-    HANDLE hHeap; // [esp+10h] [ebp-4h]
+      int v3; // ecx
+      CHAR *lpMem; // [esp+8h] [ebp-Ch]
+      HANDLE hHeap; // [esp+10h] [ebp-4h]
 
-    hHeap = HeapCreate(0x40000u, 0, 0);
-    lpMem = (CHAR *)HeapAlloc(hHeap, 8u, SourceSize + 1);
-    memcpy_s(lpMem, SourceSize, &unk_EC9B10, SourceSize);
-    sub_EC102A();
-    sub_EC1000(v3 + 4, (int)lpMem);
-    MessageBoxA(0, lpMem + 1, "Flag", 2u);
-    HeapFree(hHeap, 0, lpMem);
-    HeapDestroy(hHeap);
-    ExitProcess(0);
+      hHeap = HeapCreate(0x40000u, 0, 0);
+      lpMem = (CHAR *)HeapAlloc(hHeap, 8u, SourceSize + 1);
+      memcpy_s(lpMem, SourceSize, &unk_EC9B10, SourceSize);
+      sub_EC102A();
+      sub_EC1000(v3 + 4, (int)lpMem);
+      MessageBoxA(0, lpMem + 1, "Flag", 2u);
+      HeapFree(hHeap, 0, lpMem);
+      HeapDestroy(hHeap);
+      ExitProcess(0);
     }
     ```
 *然后再运行程序就得到了flag*  
