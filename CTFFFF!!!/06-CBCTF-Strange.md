@@ -41,8 +41,8 @@
         > `call    near ptr 0E0407AEFh`   
         > 但我改成 `nop` 的话, 变成:  
         > `jmp     fword ptr [eax+0] ; "Enter input: "`  
-        > 仍旧有问题, 但再 `nop` 的话, "请输入" 部分就要整没了
-        > 学长是把这里的改成了优美的 `push    offset aEnterInput ; "Enter input: "` 
+        > 仍旧有问题, 但再 `nop` 的话, "请输入" 部分就要整没了      
+        > 学长是把这里的改成了优美的 `push    offset aEnterInput ; "Enter input: "`          
         > 没招了, 先这样吧
     
 - 展示代码:
@@ -101,43 +101,67 @@
     }
     ```
 
-- 看上去是 `sub_407A00` + `^0x16`
+- 看上去是 `sub_401000` + `^0x16`
     - 这里的 `aFuxnfbQxrXeFLq` 是:
         > FuxNFb|$QXR#Xe#}F#lqZ[`T@Q&&
-    - 查看 `sub_407A00` : 是base64的加密
+    - 查看 `sub_401000` : 是base64的加密
         ``` C++
-        char *__cdecl sub_407A00(_DWORD *a1) {
-            _DWORD *v1; // ecx
-            char v2; // al
-            int v3; // eax
-            int v4; // eax
+        int __cdecl sub_401000(int a1, unsigned int a2, _DWORD *a3) {
+            char v4; // [esp+Ch] [ebp-24h]
+            char v5; // [esp+10h] [ebp-20h]
+            int v6; // [esp+14h] [ebp-1Ch]
+            int v7; // [esp+18h] [ebp-18h]
+            int v8; // [esp+1Ch] [ebp-14h]
+            unsigned int v9; // [esp+20h] [ebp-10h]
+            int v10; // [esp+24h] [ebp-Ch]
+            int v11; // [esp+28h] [ebp-8h]
+            int v12; // [esp+28h] [ebp-8h]
+            int v13; // [esp+28h] [ebp-8h]
+            int v14; // [esp+28h] [ebp-8h]
+            unsigned int v15; // [esp+2Ch] [ebp-4h]
 
-            v1 = a1;
-            if ( ((unsigned __int8)a1 & 3) == 0 )
-                goto LABEL_4;
-            do {
-                v2 = *(_BYTE *)v1;
-                v1 = (_DWORD *)((char *)v1 + 1);
-                if ( !v2 )
-                    return (char *)((char *)v1 - 1 - (char *)a1);
-            } while ( ((unsigned __int8)v1 & 3) != 0 );
-            while ( 1 ) {
-                do {
-                LABEL_4:
-                    v3 = (*v1 + 2130640639) ^ ~*v1;
-                    ++v1;
-                } while ( (v3 & 0x81010100) == 0 );
-                v4 = *(v1 - 1);
-                if ( !(_BYTE)v4 )
-                    break;
-                if ( !BYTE1(v4) )
-                    return (char *)((char *)v1 - 3 - (char *)a1);
-                if ( (v4 & 0xFF0000) == 0 )
-                    return (char *)((char *)v1 - 2 - (char *)a1);
-                if ( (v4 & 0xFF000000) == 0 )
-                    return (char *)((char *)v1 - 1 - (char *)a1);
+            *a3 = 4 * ((a2 + 2) / 3);
+            v10 = sub_4079A0(*a3 + 1);
+            if ( !v10 )
+                return 0;
+            v15 = 0;
+            v11 = 0;
+            while ( v15 < a2 ) {
+                v8 = *(unsigned __int8 *)(v15 + a1);    // 第一个字节
+                if ( ++v15 >= a2 ) {                    // v15 偷偷 +1, 指向下一字节
+                    v7 = 0;
+                }
+                else {
+                    v7 = *(unsigned __int8 *)(v15 + a1);// 第二个字节
+                    ++v15;                              
+                }
+                if ( v15 >= a2 ) {
+                    v6 = 0;
+                } 
+                else {
+                    v6 = *(unsigned __int8 *)(v15 + a1);// 第三个字节
+                    ++v15;
+                }
+                v9 = v6 | (v7 << 8) | (v8 << 16);       // 位移拼接
+                *(_BYTE *)(v11 + v10) = byte_417180[(v9 >> 18) & 0x3F]; // 再分第一组, 并映射到表
+                v12 = v11 + 1;
+                *(_BYTE *)(v12 + v10) = byte_417180[(v9 >> 12) & 0x3F]; // 第二组
+                v13 = v12 + 1;
+                if ( v15 <= a2 + 1 )                    // 还有 2 个可读
+                    v5 = byte_417180[(v9 >> 6) & 0x3F]; // 第三组
+                else
+                    v5 = 61;                            // 填充等号
+                *(_BYTE *)(v13 + v10) = v5;             
+                v14 = v13 + 1;
+                if ( v15 <= a2 )
+                    v4 = byte_417180[v9 & 0x3F];        // 最后一组
+                else
+                    v4 = 61;
+                *(_BYTE *)(v14 + v10) = v4;
+                v11 = v14 + 1;
             }
-            return (char *)((char *)(v1 - 1) - (char *)a1);
+            *(_BYTE *)(v10 + *a3) = 0;
+            return v10;
         }
         ```
     - 这里相当的阴啊, base64的加密出题人使用了自定义的编码表
@@ -146,27 +170,24 @@
         
 - 过于复杂了, 拜托ai写出解密代码 : 
     ```  python 3
+    # 尝试写一下, base64的解码
     import base64
 
-    # 自定义Base64编码表
-    custom_b64_table = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/'
-    standard_b64_table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    org = 'FuxNFb|$QXR#Xe#}F#lqZ[`T@Q&&'
+    midd = str()
 
-    # 加密字符串
-    encrypted = 'FuxNFb|$QXR#Xe#}F#lqZ[`T@Q&&'
+    # 异或还原
+    for i in org:
+        midd = midd + chr(ord(i) ^ 0x16)
 
-    # 1. 先异或0x16
-    xor_result = ''.join([chr(ord(c) ^ 0x16) for c in encrypted])
-    print("异或后:", xor_result)
+    xian_biao = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/'
+    yuan_biao = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-    # 2. 将自定义Base64转换为标准Base64
-    translated = xor_result.translate(str.maketrans(custom_b64_table, standard_b64_table))
-    print("转换后:", translated)
+    # 替换还原
+    midd = midd.translate(str.maketrans(xian_biao, yuan_biao))
+    ans = base64.b64decode(midd).decode()
 
-    # 3. Base64解码
-    flag_bytes = base64.b64decode(translated)
-    flag = flag_bytes.decode('ascii')
-    print("最终flag:", flag)
+    print(ans)
     ```
 
 *运行程序得出flag*  
