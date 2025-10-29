@@ -168,7 +168,7 @@
         > 标准 : `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/`  
         > 这里 : `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/`
         
-- 过于复杂了, 拜托ai写出解密代码 : 
+- 学习后得到以下代码: 
     ```  python 3
     # 尝试写一下, base64的解码
     import base64
