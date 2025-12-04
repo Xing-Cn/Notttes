@@ -1,23 +1,39 @@
 # Gzip 压缩
 *常用命令*
 
-``` bash
-gzip -c file.txt        # 压缩到标准输出
-```
-- 标准输入 : `stdin`          # 由键盘输入  
-- 标准输出 : `stdout`         # 输出到屏幕
+### 基础压缩
 
-``` bash
-gzip -d file.txt.gz     # 解压 .gz 文件    
-gunzip file.txt.gz      # 同上, 更常用   
-gzip -dk file.txt.gz    # -k: keep (保留原文件)  
-cat file.txt.gz | gzip -d  # 解压并显示
+| 命令                | 功能说明           |
+|---------------------|--------------------|
+| `gzip -c file.txt`  | 压缩到标准输出     |
+
+> 标准输入 : `stdin`  — 由键盘或上一个命令输出提供  
+> 标准输出 : `stdout` — 输出到屏幕或被管道接收  
+
+---
+
+### 解压相关
+
+| 命令                      | 功能说明                     |
+|---------------------------|------------------------------|
+| `gzip -d file.txt.gz`     | 解压 `.gz` 文件              |
+| `gunzip file.txt.gz`      | 同上, 更常用的解压命令       |
+| `gzip -dk file.txt.gz`    | 解压并保留原压缩文件(keep)   |
+| `cat file.txt.gz \| gzip -d` | 从标准输入解压并显示内容  |
+
+> 注意 : 在 Markdown 表格中, `|` 需要写成 `\|` 才不会被当成分隔符
+
+---
+
+### 管道操作示例
+
+```bash
+echo "text" | gzip -c | base64
 ```
 
-``` bash
-echo "text" | gzip -c | base64 # 管道操作
-```
-- `echo` 输出文本  
-- `|` 管道, 将上一步转移到下一步  
-- `gzip -c` 压缩 "text\n"  
-- `base64` 编码为文本  
+步骤说明:
+
+- `echo "text"` : 输出文本 `"text\n"`
+- `|` : 管道, 将前一个命令的输出作为后一个命令的输入  
+- `gzip -c` : 从标准输入读取数据并压缩到标准输出  
+- `base64` : 将二进制压缩结果编码为可见文本  
