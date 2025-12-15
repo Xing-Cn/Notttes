@@ -86,7 +86,7 @@ void TEA_decrypt(uint32_t v[2], const uint32_t k[4]) {
 
 ### Python 示例 : 用 TEA 解密 3 个块
 
-下面是一个 Python 版 TEA 解密示例(32 轮，标准版), 配合 CTF 常见的拆块形式:
+下面是一个 Python 版 TEA 解密示例(32 轮, 标准版), 配合 CTF 常见的拆块形式:
 
 ```python
 DELTA = 0x9E3779B9
@@ -101,7 +101,7 @@ def tea_decrypt(v, k):
     return [v0, v1]
 ```
 
-假设有 3 个 64-bit 密文常量（典型 CTF 结构）：
+假设有 3 个 64-bit 密文常量(典型 CTF 结构):
 
 ```python
 # 每个 [低32, 高32] 代表一个 64-bit 块
@@ -156,4 +156,4 @@ print(flag_bytes.decode(errors="ignore"))  # 如果是 ASCII/UTF-8, 一般能直
 ```
 
 > 实战经验:  
-> 遇到提示 “What happened before `main()`?”，**优先检查构造函数 / init 函数是不是在偷偷改 key**，不要被 `.data` 里的 "看起来很像 key 的字符串" 迷惑。
+> 遇到提示 “What happened before `main()`?”, **优先检查构造函数 / init 函数是不是在偷偷改 key**, 不要被 `.data` 里的 "看起来很像 key 的字符串" 迷惑
