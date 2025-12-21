@@ -87,3 +87,12 @@
 | 脱壳得到可反编译的 exe                  | `upx -d main.exe -o main_unpacked.exe`            |
 | 简单压缩一个自写测试程序                | `upx test.exe` 或 `upx --best test.exe`           |
 | 检查压缩后程序是否完整可用              | `upx -t main.exe`                                  |
+
+> #### 注意魔改壳:  
+> *我目前只遇到过轻度魔改的(本质还是UPX, 但无法被正确识别)*
+>  
+> - 在文件的开头:  
+>   - 把区段名改回 `UPX0`, `UPX1`, `UPX2`
+>   - 以及 `UPX!` 也需要注意
+> 
+> 这样就能用 UPX 正常脱壳
